@@ -360,7 +360,7 @@ where
     Some(res.unwrap().text().unwrap())
 }
 
-pub fn signup(client: &Client) -> Result<(PartySignup), ()> {
+pub fn signup(client: &Client) -> Result<PartySignup, ()> {
     let key = TupleKey {
         first: "signup".to_string(),
         second: "keygen".to_string(),
@@ -369,7 +369,7 @@ pub fn signup(client: &Client) -> Result<(PartySignup), ()> {
     };
 
     let res_body = postb(&client, "signupkeygen", key).unwrap();
-    let answer: Result<(PartySignup), ()> = serde_json::from_str(&res_body).unwrap();
+    let answer: Result<PartySignup, ()> = serde_json::from_str(&res_body).unwrap();
     return answer;
 }
 

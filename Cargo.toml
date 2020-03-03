@@ -15,8 +15,8 @@ keywords = [
     "cryptography",
     "cryptocurrency"]
 
-homepage = "https://github.com/KZen-networks/multi-party-ecdsa"
-repository = "https://github.com/KZen-networks/multi-party-ecdsa"
+homepage = "https://github.com/jasonh-ca/multi-party-ecdsa"
+repository = "https://github.com/jasonh-ca/multi-party-ecdsa"
 license = "GPL-3.0-or-later"
 categories = ["cryptography"]
 
@@ -24,8 +24,8 @@ categories = ["cryptography"]
 crate-type = ["lib"]
 
 [dependencies]
-paillier = { git = "https://github.com/KZen-networks/rust-paillier"}
-zk-paillier = { git = "https://github.com/KZen-networks/zk-paillier"}
+paillier = { git = "https://github.com/jasonh-ca/rust-paillier"}
+zk-paillier = { git = "https://github.com/jasonh-ca/zk-paillier"}
 
 
 hex = "0.3.2"
@@ -40,14 +40,14 @@ uuid = { version = "0.7", features = ["v4"] }
 rust-crypto = "^0.2"
 
 [dependencies.curv]
-git = "https://github.com/KZen-networks/curv"
+git = "https://github.com/jasonh-ca/curv"
 features =  ["ec_secp256k1"]
 
 [dependencies.centipede]
-git = "https://github.com/KZen-networks/centipede"
+git = "https://github.com/jasonh-ca/centipede"
 
 [patch.crates-io]
-rust-gmp = { version = "0.5.0", features = ["serde_support"], git = "https://github.com/KZen-networks/rust-gmp" }
+rust-gmp = { version = "0.5.0", features = ["serde_support"], git = "https://github.com/KZen-networks/rust-gmp", rev = "bc72b09"}
 
 [dev-dependencies]
 criterion = "0.2"
