@@ -96,11 +96,19 @@ fn main() {
     let party_num_int = party_i_signup.number.clone();
     let uuid = party_i_signup.uuid;
 
-    let party_keys = Keys::create(party_num_int.clone() as usize);
+    // here we are using a strong prime generation scheme
+    //let party_keys = Keys::createold(party_num_int.clone() as usize);
+    let party_keys = Keys::create_safe_prime(party_num_int.clone() as usize);
+    
     let (bc_i, decom_i) = party_keys.phase1_broadcast_phase3_proof_of_correct_key();
 
     //////////////////////////////////////////////////////////////////////////////
 
+    /*  broadcast bc_i which includes below:
+            ek: public key of Paillier
+            correct_key_proof: proof of correctness of ek
+            com: commit calculate from Yi and a random factor
+    */
     // send commitment to ephemeral public keys, get round 1 commitments of other parties
     assert!(broadcast(
         &client,
@@ -133,6 +141,10 @@ fn main() {
         })
         .collect::<Vec<KeyGenBroadcastMessage1>>();
 
+    /*  broadcast decom_i which includes below:
+            Yi:
+            blind_factor: used to compute commit in round1
+        */
     // round 2: send ephemeral public keys and  check commitments correctness
     assert!(broadcast(
         &client,
@@ -163,8 +175,8 @@ fn main() {
             decom_vec.push(decom_i.clone());
         } else {
             let decom_j: KeyGenDecommitMessage1 = serde_json::from_str(&round2_ans_vec[j]).unwrap();
-            y_vec.push(decom_j.y_i.clone());
-            decom_vec.push(decom_j.clone());
+            y_vec.push(decom_j.y_i.clone()); // Yi
+            decom_vec.push(decom_j.clone()); // Yi and random factor used to compute commit
             enc_keys.push(
                 (party_keys.y_i.clone() + decom_j.y_i.clone())
                     .x_coor()
@@ -177,8 +189,12 @@ fn main() {
     let mut y_vec_iter = y_vec.iter();
     let head = y_vec_iter.next().unwrap();
     let tail = y_vec_iter;
+
+    // Add Yi up to get public key of the group
     let y_sum = tail.fold(head.clone(), |acc, x| acc + x);
 
+    // verify correctness of ek and commit
+    // get the secret shares and commit to verify the secret share
     let (vss_scheme, secret_shares, _index) = party_keys
         .phase1_verify_com_phase3_verify_correct_key_phase2_distribute(
             &parames, &decom_vec, &bc1_vec,
@@ -190,6 +206,7 @@ fn main() {
     let mut j = 0;
     let mut k = 0;
     let round = 3;
+    // encrypt the secret shares by my Yi and peer's Yi
     for i in 1..PARTIES + 1 {
         if i != party_num_int {
             // prepare encrypted ss for party i:
@@ -228,6 +245,7 @@ fn main() {
         uuid.clone(),
     );
 
+    // decrypt the secret share
     let mut j = 0;
     let mut party_shares: Vec<FE> = Vec::new();
     for i in 1..PARTIES + 1 {
@@ -251,6 +269,9 @@ fn main() {
     }
     //////////////////////////////////////////////////////////////////////////////
 
+    // send vss commitments which includes:
+    //      t, n
+    //      commit: G * poly(i)
     // round 4: send vss commitments
     assert!(broadcast(
         &client,
@@ -281,6 +302,7 @@ fn main() {
         }
     }
 
+    // Verify secret share and get Xi and proof of correctness of Xi
     let (shared_keys, dlog_proof) = party_keys
         .phase2_verify_vss_construct_keypair_phase3_pok_dlog(
             &parames,
@@ -321,6 +343,8 @@ fn main() {
             j = j + 1;
         }
     }
+
+    // Verify the correctness of Xi
     Keys::verify_dlog_proofs(&parames, &dlog_proof_vec, &y_vec).expect("bad dlog proof");
     //////////////////////////////////////////////////////////////////////////////
     //save key to file:

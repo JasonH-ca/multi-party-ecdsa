@@ -144,7 +144,7 @@ pub struct Signature {
 }
 
 impl Keys {
-    pub fn create(index: usize) -> Keys {
+    pub fn createold(index: usize) -> Keys {
         let u: FE = ECScalar::new_random();
         let y = &ECPoint::generator() * &u;
         let (ek, dk) = Paillier::keypair().keys();
@@ -157,8 +157,22 @@ impl Keys {
             party_index: index.clone(),
         }
     }
+    // we recommend using safe primes if the code is used in production
+    pub fn create_safe_prime(index: usize) -> Keys {
+        let u: FE = ECScalar::new_random();
+        let y = &ECPoint::generator() * &u;
 
-    pub fn create_from(u: FE, index: usize) -> Keys {
+        let (ek, dk) = Paillier::keypair_safe_primes().keys();
+
+        Keys {
+            u_i: u,
+            y_i: y,
+            dk,
+            ek,
+            party_index: index.clone(),
+        }
+    }
+    pub fn create_fromold(u: FE, index: usize) -> Keys {
         let y = &ECPoint::generator() * &u;
         let (ek, dk) = Paillier::keypair().keys();
 
@@ -320,7 +334,7 @@ impl PartyPrivate {
         Paillier::decrypt(&self.dk, &RawCiphertext::from(ciphertext))
     }
 
-    pub fn refresh_private_key(&self, factor: &FE, index: usize) -> Keys {
+    pub fn refresh_private_keyold(&self, factor: &FE, index: usize) -> Keys {
         let u: FE = self.u_i + factor;
         let y = &ECPoint::generator() * &u;
         let (ek, dk) = Paillier::keypair().keys();
@@ -333,7 +347,20 @@ impl PartyPrivate {
             party_index: index.clone(),
         }
     }
+   // we recommend using safe primes if the code is used in production
+   pub fn refresh_private_key_safe_prime(&self, factor: &FE, index: usize) -> Keys {
+        let u: FE = self.u_i + factor;
+        let y = &ECPoint::generator() * &u;
+        let (ek, dk) = Paillier::keypair_safe_primes().keys();
 
+        Keys {
+            u_i: u,
+            y_i: y,
+            dk,
+            ek,
+            party_index: index.clone(),
+        }
+    }
     // used for verifiable recovery
     pub fn to_encrypted_segment(
         &self,
